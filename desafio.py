@@ -4,98 +4,122 @@ warnings.filterwarnings('ignore')
 from dotenv import load_dotenv
 load_dotenv()
 
+import os
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
 from crewai import Agent, Task, Crew, LLM
 
-llm_d = LLM(model="gemini/gemini-2.0-flash")
+llm_d = LLM(
+     model="gemini/gemini-2.0-flash")
 
 researcher = Agent(
-    role="Pesquisador",
-    goal="Pesquisar sobre {assunto} para a criação de um artigo para um website",
-    backstory="Você é um pesquisador eficiente\n"
-              "Você busca informações relevantes sobre {assunto}"
-              "de modo a possibilitar a escrita de um artigo em um website\n"
+    role="Pesquisador sênior",
+    goal="Pesquisar informações verídicas e relevantes sobre {assunto}",
+    backstory="Você é um pesquisador com muitos anos de experiência\n"
+              "Você busca informações sobre {assunto}"
               "",
      allow_delegation=False,
-     verbose=True
+     verbose=False
 )
 
 writer = Agent(
-    role="Escritor",
+    role="Escritor sênior",
     goal="Escrever um artigo sobre o assunto: {assunto}",
-    backstory="Você é um excelente escritor\n"
-              "Você utiliza as informaçoes coletadas pelo Pesquisador para escrever sobre {assunto} \n"
-              "Seus textos também buscam informar e entreter o leitor",
+    backstory="Você é um escritor com muitos anos de experiência\n"
+              "Você utiliza as informaçoes coletadas pelo Pesquisador para escrever sobre {assunto}\n"
+              "Seus textos são cativantes, e buscam informar e entreter o leitor, "
+              "leve em consideração que o leitor pode não possuir conhecimentos aprofundados sobre {assunto}"
+              "Você tem um conhecimento vasto sobre às normas da língua portuguesa "
+              "e não costuma cometer erros ortográgicos, gramaticais ou de sinais"
+              "",
     allow_delegation=False,
-    verbose=True
+    verbose=False
 )
 
 reviser = Agent(
-    role="Revisor",
-    goal="Revisar o texto produzido pelo Escritor sobre {assunto}"
-         "corrigindo erros de sinais, gramaticais ou ortográficos se houverem",
-    backstory="Você é um revisor dedicado e muito competente\n"
-              "Suas revisões são precisas",
-    allow_delegation=False,
-    verbose=True
+    role="Revisor sênior",
+    goal="Revisar o texto produzido pelo Escritor sobre {assunto}",
+    backstory="Você é um revisor com muitos anos de experiência\n"
+              "Você sempre oferece o texto sendo trabalhado ao requisitar ajuda de seus colegas\n\n"
+              "Additional rules for Tools:\n"
+                "-----------------"
+                "1. Regarding the Action Input (the input to the action, just a simple python dictionary, enclosed"
+                "in curly braces, using '\' to wrap keys and values.)\n"
+                
+                "For example for the following schema: \n"
+                "class ExampleToolInput(BaseModel):\n"
+                    "task: str = Field(..., description='The task to delegate')\n"
+                    "context: str = Field(..., description='The context for the task')\n"
+                    "coworker: str = Field(..., description='The role/name of the coworker to delegate to')\n"
+                "Then the input should be a JSON object with the user ID:\n"
+                "- task: The task to delegate\n"
+                "- context: The context for the task\n"
+                "- coworker: The role/name of the coworker to delegate to\n",
+    allow_delegation=True,
+    verbose=False
 )
 
 research = Task(
     description=(
-        "Busque informações atuais e relevantes para o tema: {assunto}\n"
-        "Os resultados de sua pesquisa devem ser organizados dentro das categorias: \n"
-              "1. Introdução\n"
-              "2. Conteúdo\n"
-              "3. Conclusão\n"
-              "4. Palavras chave\n"
-              "As fontes de sua pesquisa deverão ser mencionadas ao final, "
-              "sem haver a repetição de uma mesma fonte, e organizadas em ordem alfabética\n"
-              "Esse material servirá de base para o Escritor"
+        "Busque informações verdadeiras, atuais e relevantes sobre: {assunto}\n"
+        # "As fontes de sua pesquisa deverão ser mencionadas ao final, "
+        # "sem haver a repetição de uma mesma fonte\n"
     ),
-    expected_output="Um resumo com informações relevantes sobre {assunto} "
-        "organizado em introdução, conteúdo, conclusão, Palavras chave e referências",
+    expected_output="Um resumo com informações verdadeiras, atuais e relavantes sobre: {assunto} "
+        "",
     agent=researcher,
 )
 
 write = Task(
     description=(
-        "Use o material disponibilizado pelo pesquisador"
-        "para escrever um texto com no mínimo 300 palavras no modelo de artigo para website"
-        " sobre o assunto: {assunto}.\n"
-        "Utilize as informações presentes em 1. Introdução, 2. Conteúdo e 3. Conclusão"
-		"E organize seu texto considerando essas classificações\n"
-        "Utilize as palavras-chave disponibilizadas\n"
-        "Ao final, cite as referências utilizadas e as apresente em ordem alfabética"
+        "Use o material disponibilizado pelo Pesquisador sênior "
+        "para escrever um texto com no mínimo 300 e no máximo {max} palavras, "
+        "sobre o assunto: {assunto}.\n"
+        "Não se esqueça de adicionar um título cativante e "
+        "leve em consideração que seu texto será publicado como um artigo para um website\n"
+        "Não cometa qualquer erro de sinalização, gramtical ou ortográfico"
     ),
-    expected_output="Um texto sobre {assunto} com no mínimo 300 palavras e sem erros de sinais, gramaticais ou ortográficos"
-        "em formato de artigo de website\n"
-        "possuindo ao fim as referências organizadas em ordem alfabética",
+    expected_output="Um texto sobre {assunto} com no mínimo 300 e no máximo {max} palavras e "
+        "sem erros de sinais, gramaticais ou ortográficos"
+        "seguindo o formato de artigo para website\n",
     agent=writer,
 )
 
 revise = Task(
     description=(
-         "Verifique a veracidade das informações no texto produzido pelo Escritor "
-         "e caso encontre informações incorretas as substitua pelas corretas\n"
-         "Confirme a existência de uma estrutura textual, contendo introdução, desenvolvimento e conclusão "
-         "no modelo de artigo para website e corrija o texto se não encontrar essa estrutura\n"
-         "Veja se existe no mínimo 300 palvras no texto, e caso não haja complemente-o de forma a alcançar esta meta\n"
-         "Se houver, corrija erros de sinais, gramaticas ou ortográgicos\n"
-         "Não permita que uma mesma referência seja mencionada mais de uma vez no texto"
+         "Verifique se as informações do texto produzido pelo Escritor Sênior são verdadeiras "
+         "e as corrija se não forem\n"
+         "Veja se o texto produzido pelo Escritor Sênior é capaz de entreter e informar o leitor\n"
+         "Veja se o texto está dentro do modelo de artigo para website\n"
+         "Veja se existe no mínimo 300 palvras e no máximo {max} no texto\n"
+         "Verifique se há erros de sinais, gramaticais ou ortográficos no texto, "
+         "se houver, corrija-os\n"
+         ""
      ),
-    expected_output="Um texto com no mínimo 300 palavras, "
-                    "sem erros de sinais, gramaticais ou ortográgicos no modelo de artigo para website",
+    expected_output="Um texto com no mínimo 300 e no máximo {max} palavras, "
+                    "sem erros de sinais, gramaticais ou ortográgicos, "
+                    "no modelo de artigo para website",
     agent=reviser
 )
 
 crew = Crew(
     agents=[researcher, writer, reviser],
     tasks=[research, write, revise],
-    verbose=True,
-    llm=llm_d
+    llm=llm_d,
+    verbose=False,
+    embedder={
+            "provider": "google",
+            "config": {
+                 "model": "models/gemini-embedding-exp-03-07",
+                 "api_key": GEMINI_API_KEY
+                 },
+    },
+    memory=False
 )
 
 
 
-result = crew.kickoff(inputs={"assunto": "Taekwondo"})
+result = crew.kickoff(inputs={"assunto": "Cabelo", "max": "500"})
 
 print(result)
+    
