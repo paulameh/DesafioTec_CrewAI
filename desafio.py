@@ -5,12 +5,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 from crewai import Agent, Task, Crew, LLM
 
+print(os.getenv("GEMINI_API_KEY"))
+
 llm_d = LLM(
-     model="gemini/gemini-2.0-flash")
+     api_key=os.getenv("GEMINI_API_KEY"),
+     model="gemini/gemini-2.0-flash"
+)
 
 researcher = Agent(
     role="Pesquisador sênior",
@@ -31,7 +34,7 @@ writer = Agent(
               "leve em consideração que o leitor pode não possuir conhecimentos aprofundados sobre {assunto}"
               "Você tem um conhecimento vasto sobre às normas da língua portuguesa "
               "e não costuma cometer erros ortográgicos, gramaticais ou de sinais"
-              "",
+              "OSeu texto não deve possuir tags de html",
     allow_delegation=False,
     verbose=False
 )
@@ -87,9 +90,9 @@ write = Task(
 
 revise = Task(
     description=(
-         "Verifique se as informações do texto produzido pelo Escritor Sênior são verdadeiras "
+         "Verifique se as informações do texto são verdadeiras "
          "e as corrija se não forem\n"
-         "Veja se o texto produzido pelo Escritor Sênior é capaz de entreter e informar o leitor\n"
+         "Veja se o texto produzido é capaz de entreter e informar o leitor\n"
          "Veja se o texto está dentro do modelo de artigo para website\n"
          "Veja se existe no mínimo 300 palvras e no máximo {max} no texto\n"
          "Verifique se há erros de sinais, gramaticais ou ortográficos no texto, "
@@ -106,18 +109,16 @@ crew = Crew(
     agents=[researcher, writer, reviser],
     tasks=[research, write, revise],
     llm=llm_d,
-    verbose=False,
-    embedder={
-            "provider": "google",
-            "config": {
-                 "model": "models/gemini-embedding-exp-03-07",
-                 "api_key": GEMINI_API_KEY
-                 },
-    },
+    verbose=True,
+    # embedder={
+    #         "provider": "google",
+    #         "config": {
+    #              "model": "models/gemini-embedding-exp-03-07",
+    #              "api_key": GEMINI_API_KEY
+    #              },
+    # },
     memory=False
 )
-
-
 
 result = crew.kickoff(inputs={"assunto": "Cabelo", "max": "500"})
 
