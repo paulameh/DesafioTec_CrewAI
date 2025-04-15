@@ -11,6 +11,14 @@ from crewai import Agent, Task, Crew, LLM
 from wikiAPI_tool import WikipediaSearchTool
 wikipedia = WikipediaSearchTool()
 
+from pydantic import BaseModel, Field
+class Artigo(BaseModel):
+    title: str = Field(description="Título do artigo")
+    content: str = Field(description="Conteúdo do artigo")
+    key_words: list = Field(description="Palavras-chave do conteúdo do artigo")
+
+
+
 llm_d = LLM(
      api_key = os.getenv("GEMINI_API_KEY"),
      model = "gemini/gemini-2.0-flash"
@@ -24,7 +32,7 @@ researcher = Agent(
               "Você deve se comunicar somente através da língua portuguesa",
      allow_delegation=False,
      tools= [wikipedia],
-     verbose=True
+     verbose=False
 )
 
 writer = Agent(
@@ -62,6 +70,7 @@ reviser = Agent(
             "- context: The context for the task\n"
             "- coworker: The role/name of the coworker to delegate to\n"
             "Você deve se comunicar somente através da língua portuguesa",
+            
     allow_delegation=True,
     verbose=False
 )
@@ -99,11 +108,12 @@ revise = Task(
          "Veja se existe no mínimo 300 palvras e no máximo {max} no texto\n"
          "Verifique se há erros de sinais, gramaticais ou ortográficos no texto, "
          "se houver, corrija-os\n"
-         ""
      ),
-    expected_output="Um texto com no mínimo 300 e no máximo {max} palavras, "
+    expected_output = "Um texto com no mínimo 300 e no máximo {max} palavras, "
                     "sem erros de sinais, gramaticais ou ortográgicos, "
-                    "no modelo de artigo para website",
+                    "no modelo de artigo para website"
+        "",
+    output_pydantic = Artigo,
     agent=reviser
 )
 
@@ -111,19 +121,17 @@ crew = Crew(
     agents=[researcher, writer, reviser],
     tasks=[research, write, revise],
     llm=llm_d,
-    verbose=True,
+    verbose=False,
     embedder={
             "provider": "google",
             "config": {
                  "model": "models/gemini-embedding-exp-03-07",
                  "api_key": os.getenv("GEMINI_API_KEY"),
-                 "title": "Embeddings for Embedchain"
                  },
     },
     memory=True
 )
 
-result = crew.kickoff(inputs={"assunto": "Império Inca", "max": "500"})
+result = crew.kickoff(inputs={"assunto": "Brasil", "max": "500"})
 
 print(result)
-    
