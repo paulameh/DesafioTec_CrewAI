@@ -1,14 +1,10 @@
 # Gerador de artigos com CrewAI e API da Wikipedia
 
-___
-
 Este projeto busca gerar artigos de qualquer assunto, com no mínimo 300 e no máximo 500 palavras (por padrão) com Inteligência artificial. 
 
 Neste sistema, o usuário pode selecionar um assunto e, se preferir, um número máximo personalizado de palavras para o artigo a ser gerado, o qual será apresentado em uma página web utilizando notação pydantic, contendo os campos: title, key_words e content.
 
 ## Preparando o ambiente
-
-___
 
 Adicionar em uma arquivo .env :
 
@@ -19,8 +15,6 @@ Adicionar em uma arquivo .env :
 E por fim, instale as bibliotecas em `requirements.txt`
 
 ### Executando o sistema
-
-___
 
 1. Executar o arquivo `sistemaAPI.py`
 2. Abrir em seu navegador a url: localhost:8000/artigo/**Assunto**/**Max**
