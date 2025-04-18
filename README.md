@@ -9,10 +9,10 @@ Neste sistema, o usuário pode selecionar um assunto e, se preferir, um número 
 Adicionar em uma arquivo .env :
 
     MODEL=gemini/gemini-2.0-flash
-    GEMINI_API_KEY= [**Chave de API da google/gemini**]
-    ACCESS_TOKEN= [**Chave de API da Wikimedia**]
+    GEMINI_API_KEY= (Chave de API da google/gemini)
+    ACCESS_TOKEN= (Chave de API da Wikimedia)
 
-E por fim, instale as bibliotecas em `requirements.txt`
+E por fim, instale as dependências em `requirements.txt`
 
 ## Executando o sistema
 
