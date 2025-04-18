@@ -14,7 +14,7 @@ Adicionar em uma arquivo .env :
 
 E por fim, instale as bibliotecas em `requirements.txt`
 
-### Executando o sistema
+## Executando o sistema
 
 1. Executar o arquivo `sistemaAPI.py`
 2. Abrir em seu navegador a url: localhost:8000/artigo/**Assunto**/**Max**
